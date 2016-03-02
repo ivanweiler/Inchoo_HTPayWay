@@ -33,7 +33,7 @@ class Inchoo_HTPayWay_Block_Redirect extends Mage_Page_Block_Redirect
     protected function _toHtml()
     {
         $form = new Varien_Data_Form();
-        $formId = 'inchoo_tcompayway_redirect_form';
+        $formId = 'inchoo_htpayway_redirect_form';
 
         $form->setAction($helper->getPostUrl())
              ->setId($formId)
@@ -46,7 +46,7 @@ class Inchoo_HTPayWay_Block_Redirect extends Mage_Page_Block_Redirect
         $form->addField('Installments', 'hidden', array('name'=>'Installments', 'value'=>'N'));
 
         $html = '<html><body>';
-        $html .= $this->__('You will be redirected to the T-Com PayWay website in a few seconds.');
+        $html .= $this->__('You will be redirected to the HT PayWay website in a few seconds.');
         $html .= $form->toHtml();
         $html .= '<script type="text/javascript">document.getElementById("'.$formId.'").submit();</script>';
         $html .= '</body></html>';

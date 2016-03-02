@@ -61,6 +61,7 @@
                 <payment_action>authorize_capture</payment_action>
                 <title><![CDATA[HT PayWay]]></title>
                 <shop_secret_key backend_model="adminhtml/system_config_backend_encrypted"/>
+                <language>hr</language>
                 <allowspecific>0</allowspecific>
             </inchoo_htpayway>
         </payment>

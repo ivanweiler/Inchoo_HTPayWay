@@ -109,7 +109,7 @@ class Inchoo_HTPayWay_StandardController extends Mage_Core_Controller_Front_Acti
 
         $message = $this->__(
             'HT PayWay message: %s.',
-            $this->_getPayWayModel()->getResultMessage($payWayParams['pgw_result_code'])
+            $this->__($this->_getPayWayModel()->getResultMessage($payWayParams['pgw_result_code']))
         );
 
         //cancel order on cancelation code
@@ -161,11 +161,11 @@ class Inchoo_HTPayWay_StandardController extends Mage_Core_Controller_Front_Acti
     }
 
     /**
-     * @return Inchoo_TComPayWay_Model_Standard
+     * @return Inchoo_HTPayWay_Model_Standard
      */
     protected function _getPayWayModel()
     {
-        //return Mage::helper('payment')->getMethodInstance(Inchoo_TComPayWay_Model_Standard::CODE);
+        //return Mage::helper('payment')->getMethodInstance(Inchoo_HTPayWay_Model_Standard::CODE);
         return Mage::getSingleton('inchoo_htpayway/standard');
     }
 

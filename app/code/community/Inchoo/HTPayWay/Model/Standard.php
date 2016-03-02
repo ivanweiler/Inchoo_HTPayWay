@@ -25,7 +25,7 @@ class Inchoo_HTPayWay_Model_Standard extends Mage_Payment_Model_Method_Abstract
      * @var string
      */
     protected $_formBlockType = 'inchoo_htpayway/payment_form';
-    //protected $_infoBlockType = 'inchoo_tcompayway/payment_info';
+    //protected $_infoBlockType = 'inchoo_htpayway/payment_info';
 
     /**
      * Payment Method features
@@ -187,7 +187,7 @@ class Inchoo_HTPayWay_Model_Standard extends Mage_Payment_Model_Method_Abstract
 
         // 0 = naknadna naplata / predautorizacija; 1 = automatska naplata
         $pgwData['pgw_authorization_type'] = '1';
-        $pgwData['pgw_language']           = 'hr';
+        $pgwData['pgw_language']           = $this->getConfigData('language');
 
         $pgwData['pgw_success_url']    = $this->getSuccessUrl();
         $pgwData['pgw_failure_url']    = $this->getFailureUrl();
