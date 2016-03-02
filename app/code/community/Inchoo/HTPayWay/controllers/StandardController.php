@@ -50,7 +50,7 @@ class Inchoo_HTPayWay_StandardController extends Mage_Core_Controller_Front_Acti
 
         $order = Mage::getModel('sales/order')->loadByIncrementId($payWayParams['pgw_order_id']);
         if(!$order->getId()) {
-            $this->_getCheckoutSession()->addError($this->__('Order not found.'));
+            $this->_getCheckoutSession()->addError($this->__('This order no longer exists.'));
             $this->_redirect('checkout/cart');
             return;
         }
@@ -102,13 +102,13 @@ class Inchoo_HTPayWay_StandardController extends Mage_Core_Controller_Front_Acti
         /** @var $order Mage_Sales_Model_Order */
         $order = Mage::getModel('sales/order')->loadByIncrementId($payWayParams['pgw_order_id']);
         if(!$order->getId()) {
-            $this->_getCheckoutSession()->addError($this->__('Order not found.'));
+            $this->_getCheckoutSession()->addError($this->__('This order no longer exists.'));
             $this->_redirect('checkout/cart');
             return;
         }
 
         $message = $this->__(
-            'HT PayWay error: %s.',
+            'HT PayWay message: %s.',
             $this->_getPayWayModel()->getResultMessage($payWayParams['pgw_result_code'])
         );
 

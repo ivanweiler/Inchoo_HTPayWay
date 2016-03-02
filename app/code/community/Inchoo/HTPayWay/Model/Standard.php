@@ -50,6 +50,7 @@ class Inchoo_HTPayWay_Model_Standard extends Mage_Payment_Model_Method_Abstract
         '2'     => 'Processing error',
         '3'     => 'Action canceled',
         '4'     => 'Action failed (3D Secure MPI)',
+        '5'     => 'Authorization not found',
         '1000'  => 'Invalid signature',
         '1001'  => 'Invalid shop id',
         '1002'  => 'Invalid transaction id',
