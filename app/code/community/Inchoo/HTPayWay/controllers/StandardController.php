@@ -15,11 +15,6 @@ class Inchoo_HTPayWay_StandardController extends Mage_Core_Controller_Front_Acti
         }
 
         $payWayModel = $this->_getPayWayModel();
-
-        //$order->getBillingAddress()->setTelephone('123 & 123');
-        // & / " '
-        //123 &#x2F; \ ?*+-:;#%&amp; &quot;&#x27; 123
-
         $payWayData = $payWayModel->prepareOrderData($order);
 
         $this->getResponse()->setBody(
@@ -39,9 +34,11 @@ class Inchoo_HTPayWay_StandardController extends Mage_Core_Controller_Front_Acti
     public function successAction()
     {
         $payWayParams = $this->getRequest()->getParams();
-        $this->_getPayWayModel()->debugData($payWayParams);
+        $payWayModel = $this->_getPayWayModel();
 
-        if(!$this->_validateSuccessParams($payWayParams)) {
+        $payWayModel->debugData($payWayParams);
+
+        if(!$payWayModel->validateResponse($payWayParams)) {
             $this->_forward('noRoute');
             return;
         }
@@ -70,16 +67,6 @@ class Inchoo_HTPayWay_StandardController extends Mage_Core_Controller_Front_Acti
         if($payment->getCreatedInvoice()) {
             $order->sendNewOrderEmail();
         }
-
-        /*
-        $invoice = $payment->getCreatedInvoice();
-        if ($invoice) {
-            $message = $this->__('Notified customer about invoice #%s.', $invoice->getIncrementId());
-            $order->queueNewOrderEmail()->addStatusHistoryComment($message)
-                ->setIsCustomerNotified(true)
-                ->save();
-        }
-        */
 
         $this->_redirect('checkout/onepage/success', array('_secure'=>true));
     }

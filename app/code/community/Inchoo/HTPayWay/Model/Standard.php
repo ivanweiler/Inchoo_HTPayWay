@@ -84,23 +84,16 @@ class Inchoo_HTPayWay_Model_Standard extends Mage_Payment_Model_Method_Abstract
      * @var array
      */
     private $_signatureKeyOrder = array(
-        'pgw_result_code',
-        'pgw_trace_ref',
-        'pgw_transaction_id',
+        'method',
         'pgw_shop_id',
         'pgw_order_id',
         'pgw_amount',
-        'pgw_installments',
         'pgw_authorization_type',
         'pgw_authorization_token',
         'pgw_language',
         'pgw_return_method',
         'pgw_success_url',
         'pgw_failure_url',
-        'pgw_card_number',
-        'pgw_card_expiration_date',
-        'pgw_card_verification_data',
-        'pgw_card_type_id',
         'pgw_first_name',
         'pgw_last_name',
         'pgw_street',
@@ -110,6 +103,32 @@ class Inchoo_HTPayWay_Model_Standard extends Mage_Payment_Model_Method_Abstract
         'pgw_telephone',
         'pgw_email',
         'pgw_merchant_data',
+        'pgw_order_info',
+        'pgw_order_items',
+        'pgw_disable_installments'
+    );
+
+    /**
+     * @var array
+     */
+    protected $_successParams = array(
+        'pgw_trace_ref'         => true,
+        'pgw_transaction_id'    => true,
+        'pgw_order_id'          => true,
+        'pgw_amount'            => true,
+        'pgw_installments'      => true,
+        'pgw_card_type_id'      => true,
+        'pgw_merchant_data'     => false
+    );
+
+    /**
+     * @var array
+     */
+    protected $_failureParams = array(
+        'pgw_result_code'   => true,
+        'pgw_trace_ref'     => true,
+        'pgw_order_id'      => true,
+        'pgw_merchant_data' => false
     );
 
     /**
@@ -181,6 +200,10 @@ class Inchoo_HTPayWay_Model_Standard extends Mage_Payment_Model_Method_Abstract
         $pgwData = array();
         $billing = $order->getBillingAddress();
 
+        //array order matters here, don't change it
+
+        $pgwData['method'] = self::API_METHOD;
+
         $pgwData['pgw_shop_id']     = $this->getConfigData('shop_id');
         $pgwData['pgw_order_id']    = 'TEST01-' . $order->getIncrementId();
         $pgwData['pgw_amount']      = number_format($order->getBaseGrandTotal(), 2, '', '');
@@ -201,22 +224,50 @@ class Inchoo_HTPayWay_Model_Standard extends Mage_Payment_Model_Method_Abstract
         $pgwData['pgw_telephone']      = $this->_prepareString($billing->getTelephone(), 50);
         $pgwData['pgw_email']          = $order->getCustomerEmail();
 
-        $pgwData['pgw_signature'] = $this->_getSignature($pgwData, self::API_METHOD);
+        //sorts array
+        //$pgwData = array_merge(array_flip($this->_signatureKeyOrder), $pgwData);
+
+        $pgwData['pgw_signature'] = $this->_getSignature($pgwData);
 
         return $pgwData;
     }
 
     /**
+     * Validates success/failure response for required params and valid signature
+     *
      * @param array $data
      * @return bool
      */
     public function validateResponse($data)
     {
-        if(!isset($data['pgw_signature'])) {
+        if(!isset($data['pgw_signature']) || !isset($data['action'])) {
             return false;
         }
 
-        return ($data['pgw_signature'] == $this->_getSignature($data));
+        $action = $data['action'];
+        $signature = $data['pgw_signature'];
+
+        unset($data['action']);
+        unset($data['pgw_signature']);
+
+        switch($action) {
+            case 'success':
+                $params = $this->_successParams;
+                break;
+            case 'failure':
+                $params = $this->_failureParams;
+                break;
+            default:
+                return false;
+        }
+
+        foreach($params as $param => $required) {
+            if($required && !isset($data[$param])) {
+                return false;
+            }
+        }
+
+        return ($signature == $this->_getSignature($data));
     }
 
     /**
@@ -230,22 +281,15 @@ class Inchoo_HTPayWay_Model_Standard extends Mage_Payment_Model_Method_Abstract
 
     /**
      * @param array $data
-     * @param string $method
      * @return string
      */
-    public function _getSignature($data, $method = '')
+    public function _getSignature($data)
     {
         $toHash = '';
         $secret = $this->getConfigData('shop_secret_key');
 
-        if($method) {
-            $toHash .= $method . $secret;
-        }
-
-        foreach($this->_signatureKeyOrder as $key) {
-            if(isset($data[$key])) {
-                $toHash .= $data[$key] . $secret;
-            }
+        foreach($data as $value) {
+            $toHash .= $value . $secret;
         }
 
         return hash('sha512', $toHash);
@@ -288,6 +332,10 @@ class Inchoo_HTPayWay_Model_Standard extends Mage_Payment_Model_Method_Abstract
 
         //only ASCII printable chars allowed
         $string = preg_replace('#[^\x20-\x7e]#u', '?', $string);
+
+        //form on PayWay side has problems with html chars
+        $string = str_replace(array('\'', '"', '&', '/', '<', '>'), ' ', $string);
+
         $string = trim($string);
 
         if($length > 0) {
