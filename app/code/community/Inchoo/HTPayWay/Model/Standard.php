@@ -83,7 +83,7 @@ class Inchoo_HTPayWay_Model_Standard extends Mage_Payment_Model_Method_Abstract
     /**
      * @var array
      */
-    private $_signatureKeyOrder = array(
+    protected $_signatureKeyOrder = array(
         'method',
         'pgw_shop_id',
         'pgw_order_id',
@@ -304,7 +304,7 @@ class Inchoo_HTPayWay_Model_Standard extends Mage_Payment_Model_Method_Abstract
      * @param int|bool $length
      * @return string
      */
-    private function _prepareString($string, $length = false)
+    protected function _prepareString($string, $length = false)
     {
         if(function_exists('transliterator_transliterate')) {
             /**
@@ -339,11 +339,11 @@ class Inchoo_HTPayWay_Model_Standard extends Mage_Payment_Model_Method_Abstract
 
         /**
          * Form on PayWay side currently has problem with html chars,
-         * next line will be removed when it's fixed
+         * next lines will be removed when it's fixed
          */
-        $string = str_replace(array('\'', '"', '&', '/', '<', '>'), ' ', $string);
+        //$string = str_replace(array('\'', '"', '&', '/', '<', '>'), ' ', $string);
+        //$string = preg_replace('#\s+#', ' ', $string);
 
-        $string = preg_replace('#\s+#', ' ', $string);
         $string = trim($string);
 
         if($length > 0) {

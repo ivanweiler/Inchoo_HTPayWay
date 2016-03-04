@@ -54,6 +54,7 @@ class Inchoo_HTPayWay_StandardController extends Mage_Core_Controller_Front_Acti
 
         //register transaction && create invoice
 
+        /** @var Mage_Sales_Model_Order_Payment $payment */
         $payment = $order->getPayment();
         $payment
             ->setTransactionId($payWayParams['pgw_transaction_id'])

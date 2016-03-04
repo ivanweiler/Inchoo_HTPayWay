@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html>
+<body>
+
+    <div class="page-title">
+        <h1><?php echo $this->__('Redirecting...') ?></h1>
+    </div>
+
+    <p><?php echo $this->__('You will be redirected to the HT PayWay website in a few seconds.'); ?></p>
+
+    <?php echo $this->getFormHtml(); ?>
+
+    <script type="text/javascript">
+        document.getElementById("<?php echo $this->getFormId() ?>").submit();
+    </script>
+
+</body>
+</html>
