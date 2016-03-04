@@ -7,7 +7,7 @@ class Inchoo_HTPayWay_StandardController extends Mage_Core_Controller_Front_Acti
      */
     public function redirectAction()
     {
-        $order = $this->_getCheckoutSessionOrder();
+        $order = $this->_getLastOrder();
 
         if(!$order) {
             $this->_forward('noRoute');
@@ -15,7 +15,9 @@ class Inchoo_HTPayWay_StandardController extends Mage_Core_Controller_Front_Acti
         }
 
         $payWayModel = $this->_getPayWayModel();
-        $payWayData = $payWayModel->prepareOrderData($order);
+        $payWayData = $payWayModel->prepareRequest($order);
+
+        $payWayModel->debugData($payWayData);
 
         $this->getResponse()->setBody(
             $this->getLayout()
@@ -24,8 +26,6 @@ class Inchoo_HTPayWay_StandardController extends Mage_Core_Controller_Front_Acti
                 ->setFormFields($payWayData)
                 ->toHtml()
         );
-
-        $payWayModel->debugData($payWayData);
     }
 
     /**
@@ -38,7 +38,7 @@ class Inchoo_HTPayWay_StandardController extends Mage_Core_Controller_Front_Acti
 
         $payWayModel->debugData($payWayParams);
 
-        if(!$payWayModel->validateResponse($payWayParams)) {
+        if(!$payWayModel->validateResponse($payWayParams, 'success')) {
             $this->_forward('noRoute');
             return;
         }
@@ -57,8 +57,12 @@ class Inchoo_HTPayWay_StandardController extends Mage_Core_Controller_Front_Acti
         $payment = $order->getPayment();
         $payment
             ->setTransactionId($payWayParams['pgw_transaction_id'])
-            ->setIsTransactionClosed(0)
-            ->registerCaptureNotification($payWayParams['pgw_amount']/100);
+            ->setIsTransactionClosed(1)
+            ->setTransactionAdditionalInfo(
+                Mage_Sales_Model_Order_Payment_Transaction::RAW_DETAILS,
+                $payWayParams
+            );
+        $payment->registerCaptureNotification($payWayParams['pgw_amount']/100);
 
         //avoiding duplicate history and order save
         $order->getStatusHistoryCollection()->getLastItem()->setIsCustomerNotified(true);
@@ -77,9 +81,11 @@ class Inchoo_HTPayWay_StandardController extends Mage_Core_Controller_Front_Acti
     public function failureAction()
     {
         $payWayParams = $this->getRequest()->getParams();
-        $this->_getPayWayModel()->debugData($payWayParams);
+        $payWayModel = $this->_getPayWayModel();
 
-        if(!$this->_validateFailureParams($payWayParams)) {
+        $payWayModel->debugData($payWayParams);
+
+        if(!$payWayModel->validateResponse($payWayParams, 'failure')) {
             $this->_forward('noRoute');
             return;
         }
@@ -94,22 +100,19 @@ class Inchoo_HTPayWay_StandardController extends Mage_Core_Controller_Front_Acti
             return;
         }
 
-        $message = $this->__(
-            'HT PayWay message: %s.',
-            $this->__($this->_getPayWayModel()->getResultMessage($payWayParams['pgw_result_code']))
-        );
+        $payWayMessage = $this->__($payWayModel->getResultMessage($payWayParams['pgw_result_code']));
+        $message = $this->__('HT PayWay message: %s.', $payWayMessage);
 
         //cancel order on cancelation code
         if($payWayParams['pgw_result_code'] == '3') {
             $order->cancel();
+            //delete order form session on cancel ?
         } else {
             $history = $order->addStatusHistoryComment($message);
             $history->setIsCustomerNotified(false);
         }
 
         $order->save();
-
-        //clear order from session here?
 
         if(Mage::getSingleton('checkout/cart')->isEmpty()) {
             $this->_restoreQuote($order);
@@ -130,7 +133,7 @@ class Inchoo_HTPayWay_StandardController extends Mage_Core_Controller_Front_Acti
     /**
      * @return bool|Mage_Sales_Model_Order
      */
-    protected function _getCheckoutSessionOrder()
+    protected function _getLastOrder()
     {
         $session = Mage::getSingleton('checkout/session');
 
@@ -152,12 +155,11 @@ class Inchoo_HTPayWay_StandardController extends Mage_Core_Controller_Front_Acti
      */
     protected function _getPayWayModel()
     {
-        //return Mage::helper('payment')->getMethodInstance(Inchoo_HTPayWay_Model_Standard::CODE);
-        return Mage::getSingleton('inchoo_htpayway/standard');
+        return Mage::getModel('inchoo_htpayway/standard');
     }
 
     /**
-     * @param $order
+     * @param Mage_Sales_Model_Order $order
      * @return bool
      */
     protected function _restoreQuote($order)
@@ -170,46 +172,9 @@ class Inchoo_HTPayWay_StandardController extends Mage_Core_Controller_Front_Acti
                 ->save();
 
             Mage::getSingleton('checkout/session')->replaceQuote($quote);
-            //->unsLastRealOrderId();
             return true;
         }
         return false;
-    }
-
-    /**
-     * @return bool
-     */
-    protected function _validateSuccessParams($data)
-    {
-        if(!$this->_getPayWayModel()->validateResponse($data)) {
-            return false;
-        }
-
-        foreach(array('pgw_order_id', 'pgw_transaction_id') as $key) {
-            if(!isset($data[$key])) {
-                return false;
-            }
-        }
-
-        return true;
-    }
-
-    /**
-     * @return bool
-     */
-    protected function _validateFailureParams($data)
-    {
-        if(!$this->_getPayWayModel()->validateResponse($data)) {
-            return false;
-        }
-
-        foreach(array('pgw_order_id', 'pgw_result_code') as $key) {
-            if(!isset($data[$key])) {
-                return false;
-            }
-        }
-
-        return true;
     }
 
 }

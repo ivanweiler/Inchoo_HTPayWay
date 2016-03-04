@@ -16,7 +16,8 @@ class Inchoo_HTPayWay_Model_Standard extends Mage_Payment_Model_Method_Abstract
     const API_METHOD = 'authorize-form';
 
     /**
-     * Payment Method code
+     * Payment method code
+     *
      * @var string
      */
     protected $_code = 'inchoo_htpayway';
@@ -25,7 +26,6 @@ class Inchoo_HTPayWay_Model_Standard extends Mage_Payment_Model_Method_Abstract
      * @var string
      */
     protected $_formBlockType = 'inchoo_htpayway/payment_form';
-    //protected $_infoBlockType = 'inchoo_htpayway/payment_info';
 
     /**
      * Payment Method features
@@ -195,12 +195,10 @@ class Inchoo_HTPayWay_Model_Standard extends Mage_Payment_Model_Method_Abstract
      * @param Mage_Sales_Model_Order $order
      * @return array
      */
-    public function prepareOrderData(Mage_Sales_Model_Order $order)
+    public function prepareRequest(Mage_Sales_Model_Order $order)
     {
         $pgwData = array();
         $billing = $order->getBillingAddress();
-
-        //array order matters here, don't change it
 
         $pgwData['method'] = self::API_METHOD;
 
@@ -224,10 +222,7 @@ class Inchoo_HTPayWay_Model_Standard extends Mage_Payment_Model_Method_Abstract
         $pgwData['pgw_telephone']      = $this->_prepareString($billing->getTelephone(), 50);
         $pgwData['pgw_email']          = $order->getCustomerEmail();
 
-        //sorts array
-        //$pgwData = array_merge(array_flip($this->_signatureKeyOrder), $pgwData);
-
-        $pgwData['pgw_signature'] = $this->_getSignature($pgwData);
+        $pgwData['pgw_signature'] = $this->_getSignature($pgwData, $this->_signatureKeyOrder);
 
         return $pgwData;
     }
@@ -236,18 +231,16 @@ class Inchoo_HTPayWay_Model_Standard extends Mage_Payment_Model_Method_Abstract
      * Validates success/failure response for required params and valid signature
      *
      * @param array $data
+     * @param string $action
      * @return bool
      */
-    public function validateResponse($data)
+    public function validateResponse($data, $action)
     {
-        if(!isset($data['pgw_signature']) || !isset($data['action'])) {
+        if(!isset($data['pgw_signature'])) {
             return false;
         }
 
-        $action = $data['action'];
         $signature = $data['pgw_signature'];
-
-        unset($data['action']);
         unset($data['pgw_signature']);
 
         switch($action) {
@@ -267,7 +260,7 @@ class Inchoo_HTPayWay_Model_Standard extends Mage_Payment_Model_Method_Abstract
             }
         }
 
-        return ($signature == $this->_getSignature($data));
+        return ($signature == $this->_getSignature($data, array_keys($params)));
     }
 
     /**
@@ -280,16 +273,27 @@ class Inchoo_HTPayWay_Model_Standard extends Mage_Payment_Model_Method_Abstract
     }
 
     /**
+     * Returns data signature, key order respected if needed
+     *
      * @param array $data
+     * @param array $keyOrder
      * @return string
      */
-    public function _getSignature($data)
+    protected function _getSignature($data, $keyOrder = array())
     {
         $toHash = '';
         $secret = $this->getConfigData('shop_secret_key');
 
-        foreach($data as $value) {
-            $toHash .= $value . $secret;
+        if($keyOrder) {
+            foreach($keyOrder as $key) {
+                if(isset($data[$key])) {
+                    $toHash .= $data[$key] . $secret;
+                }
+            }
+        } else {
+            foreach($data as $value) {
+                $toHash .= $value . $secret;
+            }
         }
 
         return hash('sha512', $toHash);
@@ -333,9 +337,13 @@ class Inchoo_HTPayWay_Model_Standard extends Mage_Payment_Model_Method_Abstract
         //only ASCII printable chars allowed
         $string = preg_replace('#[^\x20-\x7e]#u', '?', $string);
 
-        //form on PayWay side has problems with html chars
+        /**
+         * Form on PayWay side currently has problem with html chars,
+         * next line will be removed when it's fixed
+         */
         $string = str_replace(array('\'', '"', '&', '/', '<', '>'), ' ', $string);
 
+        $string = preg_replace('#\s+#', ' ', $string);
         $string = trim($string);
 
         if($length > 0) {
