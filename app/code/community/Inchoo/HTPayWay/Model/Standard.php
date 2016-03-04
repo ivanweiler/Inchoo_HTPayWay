@@ -148,8 +148,6 @@ class Inchoo_HTPayWay_Model_Standard extends Mage_Payment_Model_Method_Abstract
      */
     public function canUseForCurrency($currencyCode)
     {
-        return true; //dev
-
         if (!in_array($currencyCode, $this->_supportedCurrencyCodes)) {
             return false;
         }
@@ -203,10 +201,10 @@ class Inchoo_HTPayWay_Model_Standard extends Mage_Payment_Model_Method_Abstract
         $pgwData['method'] = self::API_METHOD;
 
         $pgwData['pgw_shop_id']     = $this->getConfigData('shop_id');
-        $pgwData['pgw_order_id']    = 'TEST01-' . $order->getIncrementId();
+        $pgwData['pgw_order_id']    = $order->getIncrementId();
         $pgwData['pgw_amount']      = number_format($order->getBaseGrandTotal(), 2, '', '');
 
-        // 0 = naknadna naplata / predautorizacija; 1 = automatska naplata
+        // 0 = authorize; 1 = capture
         $pgwData['pgw_authorization_type'] = '1';
         $pgwData['pgw_language']           = $this->getConfigData('language');
 

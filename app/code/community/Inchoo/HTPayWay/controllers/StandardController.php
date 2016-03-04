@@ -43,8 +43,6 @@ class Inchoo_HTPayWay_StandardController extends Mage_Core_Controller_Front_Acti
             return;
         }
 
-        $payWayParams['pgw_order_id'] = substr($payWayParams['pgw_order_id'], 7); //dev
-
         $order = Mage::getModel('sales/order')->loadByIncrementId($payWayParams['pgw_order_id']);
         if(!$order->getId()) {
             $this->_getCheckoutSession()->addError($this->__('This order no longer exists.'));
@@ -90,8 +88,6 @@ class Inchoo_HTPayWay_StandardController extends Mage_Core_Controller_Front_Acti
             $this->_forward('noRoute');
             return;
         }
-
-        $payWayParams['pgw_order_id'] = substr($payWayParams['pgw_order_id'], 7); //dev
 
         /** @var $order Mage_Sales_Model_Order */
         $order = Mage::getModel('sales/order')->loadByIncrementId($payWayParams['pgw_order_id']);
