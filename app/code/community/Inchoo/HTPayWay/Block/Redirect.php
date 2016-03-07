@@ -29,28 +29,4 @@ class Inchoo_HTPayWay_Block_Redirect extends Mage_Core_Block_Template
         return $form->toHtml();
     }
 
-    /*
-    protected function _toHtml()
-    {
-        $form = new Varien_Data_Form();
-
-        $form->setAction($this->getTargetUrl())
-             ->setId($this->getFormId())
-             ->setMethod('POST')
-             ->setUseContainer(true);
-
-        foreach($this->getFormFields() as $name => $value) {
-            $form->addField($name, 'hidden', array('value' => $value));
-        }
-
-        $html = '<html><body>';
-        $html .= '<p>' . $this->__('You will be redirected to the HT PayWay website in a few seconds.') . '</p>';
-        $html .= $form->toHtml();
-        $html .= '<script type="text/javascript">////document.getElementById("' . $this->getFormId() . '").submit();</script>';
-        $html .= '</body></html>';
-
-        return $html;
-    }
-    */
-
 }

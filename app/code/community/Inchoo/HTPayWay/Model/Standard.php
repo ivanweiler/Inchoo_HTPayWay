@@ -298,6 +298,8 @@ class Inchoo_HTPayWay_Model_Standard extends Mage_Payment_Model_Method_Abstract
     }
 
     /**
+     * Transliterate string and respect maximum length
+     *
      * @param string $string
      * @param int|bool $length
      * @return string
@@ -323,21 +325,9 @@ class Inchoo_HTPayWay_Model_Standard extends Mage_Payment_Model_Method_Abstract
             }
         }
 
-        if (function_exists('iconv')) {
-            $originalCtype = setlocale(LC_CTYPE, 0);
-            setlocale(LC_CTYPE, 'en_US.UTF-8');
-            if($translit = @iconv('UTF-8', 'ASCII//TRANSLIT', $string)) {
-                $string = $translit;
-            }
-            setlocale(LC_CTYPE, $originalCtype);
-        }
-
-        //only ASCII printable chars allowed
-        $string = preg_replace('#[^\x20-\x7e]#u', '?', $string);
-
         /**
-         * Form on PayWay side currently has problem with html chars,
-         * next lines will be removed when it's fixed
+         * Form on PayWay side currently has problem with html chars, it is reported
+         * and will be fixed on their side, but this is possible workaround
          */
         //$string = str_replace(array('\'', '"', '&', '/', '<', '>'), ' ', $string);
         //$string = preg_replace('#\s+#', ' ', $string);
